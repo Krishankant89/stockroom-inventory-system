@@ -23,11 +23,20 @@ export default function Login() {
   useEffect(() => {
     const checkSession = async () => {
       if (!session) return
-      const { data, error } = await getMfaAssurance()
-      if (error) return
-      if (data.currentLevel === 'aal1' && data.nextLevel === 'aal2') {
-        navigate('/mfa', { replace: true })
-      } else if (data.currentLevel === 'aal2') {
+
+      try {
+        const { data, error } = await getMfaAssurance()
+        if (error) {
+          navigate('/', { replace: true })
+          return
+        }
+
+        if (data?.currentLevel === 'aal1' && data?.nextLevel === 'aal2') {
+          navigate('/mfa', { replace: true })
+        } else if (data?.currentLevel === 'aal2' || !data) {
+          navigate('/', { replace: true })
+        }
+      } catch {
         navigate('/', { replace: true })
       }
     }

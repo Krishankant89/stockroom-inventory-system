@@ -26,10 +26,18 @@ function PrivateRoute({ children }) {
         if (active) setMfaLoading(false)
         return
       }
-      const { data } = await getMfaAssurance()
-      if (active) {
-        setNeedsMfa(data?.currentLevel === 'aal1' && data?.nextLevel === 'aal2')
-        setMfaLoading(false)
+
+      try {
+        const { data, error } = await getMfaAssurance()
+        if (active) {
+          setNeedsMfa(!error && data?.currentLevel === 'aal1' && data?.nextLevel === 'aal2')
+          setMfaLoading(false)
+        }
+      } catch {
+        if (active) {
+          setNeedsMfa(false)
+          setMfaLoading(false)
+        }
       }
     }
     check()

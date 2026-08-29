@@ -3,6 +3,11 @@ import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
+const getAuthRedirectUrl = () => {
+  const configured = import.meta.env.VITE_AUTH_REDIRECT_URL
+  return configured || `${window.location.origin}/login`
+}
+
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -39,7 +44,7 @@ export function AuthProvider({ children }) {
       email,
       options: {
         shouldCreateUser: false,
-        emailRedirectTo: `${window.location.origin}/login`,
+        emailRedirectTo: getAuthRedirectUrl(),
         captchaToken,
       },
     })
@@ -49,7 +54,7 @@ export function AuthProvider({ children }) {
       email,
       options: {
         shouldCreateUser: true,
-        emailRedirectTo: `${window.location.origin}/login`,
+        emailRedirectTo: getAuthRedirectUrl(),
         data: { full_name: fullName },
         captchaToken,
       },
@@ -61,6 +66,7 @@ export function AuthProvider({ children }) {
       password,
       options: {
         data: { full_name: fullName },
+        emailRedirectTo: getAuthRedirectUrl(),
         captchaToken,
       },
     })
@@ -70,7 +76,7 @@ export function AuthProvider({ children }) {
   const signInWithGoogle = () =>
     supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/login` },
+      options: { redirectTo: getAuthRedirectUrl() },
     })
 
   const getMfaAssurance = () => supabase.auth.mfa.getAuthenticatorAssuranceLevel()
