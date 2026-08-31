@@ -20,5 +20,7 @@ export const supabase = createClient(supabaseUrl || 'https://example.supabase.co
   auth: {
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce',
   },
 })
