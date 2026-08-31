@@ -8,6 +8,7 @@ import {
   ArrowLeftRight,
   BarChart3,
   Boxes,
+  UserCircle,
   LogOut,
   Menu,
   X,
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   { to: '/suppliers', label: 'Suppliers', icon: Truck },
   { to: '/transactions', label: 'Stock Movements', icon: ArrowLeftRight },
   { to: '/reports', label: 'Reports', icon: BarChart3 },
+  { to: '/account', label: 'Account', icon: UserCircle },
 ]
 
 export default function Layout() {
