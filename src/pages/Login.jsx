@@ -124,6 +124,10 @@ export default function Login() {
 
           {message && <p className="mt-4 rounded-lg bg-brand-50 border border-brand-100 p-3 text-sm text-brand-800">{message}</p>}
 
+          <p className="mt-4 text-center text-sm text-ink/60">
+            <Link to="/forgot-password" className="text-brand-600 font-medium hover:underline">Forgot password?</Link>
+          </p>
+
           <div className="flex items-center gap-3 my-5"><div className="h-px bg-line flex-1" /><span className="text-xs text-ink/40">OR</span><div className="h-px bg-line flex-1" /></div>
 
           <button onClick={handleGoogle} disabled={busy} className="w-full border border-line rounded-lg py-2.5 text-sm font-medium text-ink hover:bg-paper transition disabled:opacity-60">
