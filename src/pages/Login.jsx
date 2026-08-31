@@ -10,6 +10,7 @@ const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY
 export default function Login() {
   const {
     session,
+    loading,
     sendLoginLink,
     sendAccountCreationLink,
     signInWithGoogle,
@@ -21,6 +22,8 @@ export default function Login() {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   useEffect(() => {
+    if (loading) return
+
     const checkSession = async () => {
       if (!session) return
 
@@ -33,7 +36,7 @@ export default function Login() {
 
         if (data?.currentLevel === 'aal1' && data?.nextLevel === 'aal2') {
           navigate('/mfa', { replace: true })
-        } else if (data?.currentLevel === 'aal2' || !data) {
+        } else {
           navigate('/', { replace: true })
         }
       } catch {
@@ -41,7 +44,7 @@ export default function Login() {
       }
     }
     checkSession()
-  }, [session, getMfaAssurance, navigate])
+  }, [session, loading, getMfaAssurance, navigate])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
