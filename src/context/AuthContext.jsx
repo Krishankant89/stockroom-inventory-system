@@ -1,19 +1,32 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
 const getAuthRedirectUrl = () => `${window.location.origin}/auth/callback`
+const getPasswordResetRedirectUrl = () => `${window.location.origin}/update-password`
+
+async function fetchProfile(userId) {
+  const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
+  return data
+}
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [passwordRecovery, setPasswordRecovery] = useState(false)
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
-      // Wait for URL token/code exchange before routing decisions.
+      if (event === 'PASSWORD_RECOVERY') {
+        setPasswordRecovery(true)
+      }
+      if (event === 'SIGNED_OUT') {
+        setPasswordRecovery(false)
+        setProfile(null)
+      }
       if (event === 'INITIAL_SESSION') {
         setLoading(false)
       }
@@ -27,13 +40,15 @@ export function AuthProvider({ children }) {
       setProfile(null)
       return
     }
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', session.user.id)
-      .single()
-      .then(({ data }) => setProfile(data))
+    fetchProfile(session.user.id).then((data) => setProfile(data))
   }, [session])
+
+  const refreshProfile = async () => {
+    if (!session?.user) return null
+    const data = await fetchProfile(session.user.id)
+    setProfile(data)
+    return data
+  }
 
   const sendLoginLink = (email, captchaToken) =>
     supabase.auth.signInWithOtp({
@@ -75,6 +90,46 @@ export function AuthProvider({ children }) {
       options: { redirectTo: getAuthRedirectUrl() },
     })
 
+  const requestPasswordReset = (email, captchaToken) =>
+    supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: getPasswordResetRedirectUrl(),
+      captchaToken,
+    })
+
+  const updatePassword = (password) => supabase.auth.updateUser({ password })
+
+  const updateProfile = async ({ fullName, username }) => {
+    const userId = session?.user?.id
+    if (!userId) return { error: { message: 'You must be signed in.' } }
+
+    const { error: authError } = await supabase.auth.updateUser({
+      data: { full_name: fullName, username },
+    })
+    if (authError) return { error: authError }
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ full_name: fullName, username })
+      .eq('id', userId)
+      .select()
+      .single()
+
+    if (!error && data) setProfile(data)
+    return { data, error }
+  }
+
+  const requestEmailChange = (email) =>
+    supabase.auth.updateUser({
+      email,
+      options: { emailRedirectTo: getAuthRedirectUrl() },
+    })
+
+  const deactivateAccount = async () => {
+    const { error } = await supabase.rpc('deactivate_own_account')
+    if (error) return { error }
+    return signOut()
+  }
+
   const getMfaAssurance = () => supabase.auth.mfa.getAuthenticatorAssuranceLevel()
 
   const listMfaFactors = () => supabase.auth.mfa.listFactors()
@@ -87,7 +142,13 @@ export function AuthProvider({ children }) {
   const verifyMfa = (factorId, challengeId, code) =>
     supabase.auth.mfa.verify({ factorId, challengeId, code })
 
-  const signOut = () => supabase.auth.signOut()
+  const signOut = useCallback(async () => {
+    const { error } = await supabase.auth.signOut({ scope: 'global' })
+    setSession(null)
+    setProfile(null)
+    setPasswordRecovery(false)
+    return { error }
+  }, [])
 
   return (
     <AuthContext.Provider
@@ -96,10 +157,17 @@ export function AuthProvider({ children }) {
         user: session?.user,
         profile,
         loading,
+        passwordRecovery,
         sendLoginLink,
         sendAccountCreationLink,
         signUp,
         signInWithGoogle,
+        requestPasswordReset,
+        updatePassword,
+        updateProfile,
+        requestEmailChange,
+        deactivateAccount,
+        refreshProfile,
         getMfaAssurance,
         listMfaFactors,
         enrollMfa,
