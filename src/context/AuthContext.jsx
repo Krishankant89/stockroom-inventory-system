@@ -3,10 +3,7 @@ import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
-const getAuthRedirectUrl = () => {
-  const configured = import.meta.env.VITE_AUTH_REDIRECT_URL
-  return configured || `${window.location.origin}/login`
-}
+const getAuthRedirectUrl = () => `${window.location.origin}/auth/callback`
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
@@ -14,13 +11,12 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
-      setLoading(false)
-    })
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
+      // Wait for URL token/code exchange before routing decisions.
+      if (event === 'INITIAL_SESSION') {
+        setLoading(false)
+      }
     })
 
     return () => listener.subscription.unsubscribe()
