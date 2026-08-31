@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Layout from './components/Layout'
 import Login from './pages/Login'
+import AuthCallback from './pages/AuthCallback'
 import Signup from './pages/Signup'
 import MFA from './pages/MFA'
 import Dashboard from './pages/Dashboard'
@@ -54,6 +55,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/mfa" element={<PrivateRoute><MFA /></PrivateRoute>} />
       <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
