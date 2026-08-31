@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function AuthCallback() {
-  const { session, loading, getMfaAssurance } = useAuth()
+  const { session, loading, passwordRecovery, getMfaAssurance } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -12,6 +12,11 @@ export default function AuthCallback() {
     const finish = async () => {
       if (!session) {
         navigate('/login', { replace: true })
+        return
+      }
+
+      if (passwordRecovery) {
+        navigate('/update-password', { replace: true })
         return
       }
 
@@ -29,7 +34,7 @@ export default function AuthCallback() {
     }
 
     finish()
-  }, [session, loading, getMfaAssurance, navigate])
+  }, [session, loading, passwordRecovery, getMfaAssurance, navigate])
 
   return (
     <div className="h-screen w-screen flex items-center justify-center bg-paper text-brand-700 font-display text-lg">
