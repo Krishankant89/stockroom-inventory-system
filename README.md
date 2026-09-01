@@ -7,7 +7,11 @@ frontend and **Supabase** (Postgres + Auth) on the backend.
 
 ## Features
 
-- Email/password auth (Supabase Auth), one profile per user
+- Passwordless email-link and Google authentication through Supabase Auth
+- Optional email/password sign-up, one profile per user
+- Cloudflare Turnstile protection on email authentication forms
+- MFA enrollment and verification with TOTP
+- Account profile fields include full name, username, role, and deactivation status
 - Products: SKU, price, cost, quantity, reorder level, category, supplier, location
 - Stock in / stock out with reason notes — every movement is logged
 - Categories & suppliers management
@@ -23,10 +27,18 @@ frontend and **Supabase** (Postgres + Auth) on the backend.
 2. Go to **SQL Editor → New query**, paste the contents of
    [`supabase/schema.sql`](./supabase/schema.sql), and run it. This creates
    all tables, a stock-transaction function, Row Level Security policies,
-   and a couple of starter categories/locations.
+   account deactivation support, and a couple of starter categories/locations.
+   Run [`supabase/account_rights.sql`](./supabase/account_rights.sql) as well
+   if the original schema was already applied to an existing project.
 3. Go to **Settings → API** and copy your **Project URL** and **anon public key**.
-4. (Optional) Under **Authentication → Providers**, turn off "Confirm email"
-   if you want instant sign-up during testing.
+4. Under **Authentication → URL Configuration**, add the callback URL for each
+   environment, such as `http://localhost:5173/login` and
+   `https://your-domain.com/login`.
+5. Enable the Google provider under **Authentication → Providers** if Google
+   sign-in is required. Configure its OAuth credentials and callback URL using
+   the values shown by Supabase.
+6. (Optional) Under **Authentication → Providers**, turn off "Confirm email"
+   if you want instant password sign-up during testing.
 
 ## 2. Configure the frontend
 
@@ -39,7 +51,16 @@ Fill in `.env`:
 ```
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-public-key
+VITE_TURNSTILE_SITE_KEY=your-turnstile-site-key
+# Optional: override the default `${window.location.origin}/login` callback.
+VITE_AUTH_REDIRECT_URL=http://localhost:5173/login
 ```
+
+The Supabase URL must be the hosted project URL (for example,
+`https://your-project-ref.supabase.co`), not `localhost` or `127.0.0.1`.
+Create the Turnstile site key in Cloudflare and configure the matching secret
+in the Supabase Auth CAPTCHA settings. Environment variables are embedded into
+the build, so configure them before running the build or deploying.
 
 ## 3. Run locally
 
@@ -48,7 +69,9 @@ npm install
 npm run dev
 ```
 
-Visit `http://localhost:5173`, click **Create one** to sign up, then log in.
+Visit `http://localhost:5173`. Use **Send sign-in link** for an existing
+account, **Create an account** for a new account, or **Continue with Google**.
+Open the email link in the same environment where the request was made.
 
 ## 4. Build for production
 
@@ -60,8 +83,9 @@ npm run preview # sanity-check the production build locally
 ## 5. Deploy
 
 The app is a static Vite build, so it deploys the same way on any of these.
-In every case, set the two environment variables
-(`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) in the platform's dashboard —
+In every case, set the environment variables
+(`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and
+`VITE_TURNSTILE_SITE_KEY`) in the platform's dashboard —
 they must be present **at build time** since Vite inlines them.
 
 ### Vercel
@@ -100,7 +124,8 @@ src/
   context/       AuthContext (Supabase session/profile)
   lib/supabase.js  Supabase client
 supabase/
-  schema.sql     Full DB schema, RLS policies, stock-transaction function
+  schema.sql     Full DB schema, RLS policies, and database functions
+  account_rights.sql  Migration for existing projects
 ```
 
 ## Notes on data model
@@ -113,3 +138,6 @@ supabase/
   which is fine for a single team/workspace. If you need per-role
   restrictions (e.g. staff can't delete products), tighten the policies in
   `schema.sql` using the `profiles.role` column that's already there.
+- Deactivated accounts are marked in `profiles.deactivated_at`; the
+  `deactivate_own_account()` function can be called by an authenticated user
+  to deactivate their own account.
