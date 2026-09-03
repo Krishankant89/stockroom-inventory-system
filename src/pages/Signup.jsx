@@ -4,6 +4,13 @@ import { Boxes } from 'lucide-react'
 import { Turnstile } from '@marsidev/react-turnstile'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
+import {
+  sanitizeEmail,
+  sanitizeText,
+  validateEmail,
+  validateFullName,
+  validatePassword,
+} from '../lib/inputValidation'
 
 const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY
 
@@ -19,12 +26,21 @@ export default function Signup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    const normalizedEmail = sanitizeEmail(email)
+    const cleanName = sanitizeText(fullName)
+    const emailError = validateEmail(normalizedEmail)
+    const nameError = validateFullName(cleanName)
+    const passwordError = validatePassword(password)
+    if (emailError || nameError || passwordError) {
+      toast.error(emailError || nameError || passwordError)
+      return
+    }
     if (!captchaToken) {
       toast.error('Please complete the security check.')
       return
     }
     setBusy(true)
-    const { error } = await signUp(email.trim().toLowerCase(), password, fullName, captchaToken)
+    const { error } = await signUp(normalizedEmail, password, cleanName, captchaToken)
     setBusy(false)
     if (error) {
       toast.error(error.message)

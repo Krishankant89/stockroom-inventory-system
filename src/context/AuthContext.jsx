@@ -1,5 +1,12 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import {
+  sanitizeEmail,
+  sanitizeText,
+  validateEmail,
+  validateFullName,
+  validatePassword,
+} from '../lib/inputValidation'
 
 const AuthContext = createContext(null)
 
@@ -50,33 +57,56 @@ export function AuthProvider({ children }) {
     return data
   }
 
-  const sendLoginLink = (email, captchaToken) =>
-    supabase.auth.signInWithOtp({
-      email,
+  const sendLoginLink = (email, captchaToken) => {
+    const normalizedEmail = sanitizeEmail(email)
+    const emailError = validateEmail(normalizedEmail)
+    if (emailError) return Promise.resolve({ data: null, error: { message: emailError } })
+
+    return supabase.auth.signInWithOtp({
+      email: normalizedEmail,
       options: {
         shouldCreateUser: false,
         emailRedirectTo: getAuthRedirectUrl(),
         captchaToken,
       },
     })
+  }
 
-  const sendAccountCreationLink = (email, fullName, captchaToken) =>
-    supabase.auth.signInWithOtp({
-      email,
+  const sendAccountCreationLink = (email, fullName, captchaToken) => {
+    const normalizedEmail = sanitizeEmail(email)
+    const cleanName = sanitizeText(fullName)
+    const emailError = validateEmail(normalizedEmail)
+    const nameError = cleanName ? validateFullName(cleanName) : ''
+    if (emailError || nameError) {
+      return Promise.resolve({ data: null, error: { message: emailError || nameError } })
+    }
+
+    return supabase.auth.signInWithOtp({
+      email: normalizedEmail,
       options: {
         shouldCreateUser: true,
         emailRedirectTo: getAuthRedirectUrl(),
-        data: { full_name: fullName },
+        data: { full_name: cleanName },
         captchaToken,
       },
     })
+  }
 
   const signUp = async (email, password, fullName, captchaToken) => {
+    const normalizedEmail = sanitizeEmail(email)
+    const cleanName = sanitizeText(fullName)
+    const emailError = validateEmail(normalizedEmail)
+    const nameError = validateFullName(cleanName)
+    const passwordError = validatePassword(password)
+    if (emailError || nameError || passwordError) {
+      return { data: null, error: { message: emailError || nameError || passwordError } }
+    }
+
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: normalizedEmail,
       password,
       options: {
-        data: { full_name: fullName },
+        data: { full_name: cleanName },
         emailRedirectTo: getAuthRedirectUrl(),
         captchaToken,
       },

@@ -4,6 +4,7 @@ import { Boxes, ShieldCheck } from 'lucide-react'
 import { Turnstile } from '@marsidev/react-turnstile'
 import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
+import { sanitizeEmail, validateEmail } from '../lib/inputValidation'
 
 const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY
 
@@ -48,6 +49,12 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    const normalizedEmail = sanitizeEmail(email)
+    const emailError = validateEmail(normalizedEmail)
+    if (emailError) {
+      toast.error(emailError)
+      return
+    }
     if (!captchaToken) {
       toast.error('Please complete the security check.')
       return
@@ -55,7 +62,7 @@ export default function Login() {
 
     setBusy(true)
     setMessage('')
-    const { error } = await sendLoginLink(email.trim().toLowerCase(), captchaToken)
+    const { error } = await sendLoginLink(normalizedEmail, captchaToken)
 
     if (!error) {
       setMessage('If an account exists for this email, a login link has been sent to it.')
@@ -66,7 +73,7 @@ export default function Login() {
     // Supabase intentionally does not expose account existence. For a new
     // address we fall back to its passwordless sign-up flow and keep the UI
     // message deliberately non-enumerating.
-    const { error: createError } = await sendAccountCreationLink(email.trim().toLowerCase(), '', captchaToken)
+    const { error: createError } = await sendAccountCreationLink(normalizedEmail, '', captchaToken)
     setBusy(false)
     if (createError) {
       toast.error(error.message)

@@ -10,6 +10,9 @@ frontend and **Supabase** (Postgres + Auth) on the backend.
 - Passwordless email-link and Google authentication through Supabase Auth
 - Optional email/password sign-up, one profile per user
 - Cloudflare Turnstile protection on email authentication forms
+- Client-side input validation and normalization for authentication fields
+- Database triggers validate and normalize profile data even when requests do not
+  come from the UI
 - MFA enrollment and verification with TOTP
 - Account profile fields include full name, username, role, and deactivation status
 - Products: SKU, price, cost, quantity, reorder level, category, supplier, location
@@ -61,6 +64,13 @@ The Supabase URL must be the hosted project URL (for example,
 Create the Turnstile site key in Cloudflare and configure the matching secret
 in the Supabase Auth CAPTCHA settings. Environment variables are embedded into
 the build, so configure them before running the build or deploying.
+
+Authentication fields are normalized and validated in the browser before being
+sent to Supabase. The database schema also validates and normalizes email,
+full-name, and username metadata in the auth trigger and profile trigger, so
+client-side checks cannot be bypassed through DevTools or direct API requests.
+Passwords are never sanitized or stored by this app; they are validated for
+length and control characters, then handled by Supabase Auth.
 
 ## 3. Run locally
 
