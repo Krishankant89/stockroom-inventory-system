@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { Box, CircularProgress, Typography } from '@mui/material'
 
 export default function AuthCallback() {
   const { session, loading, passwordRecovery, getMfaAssurance } = useAuth()
@@ -37,8 +38,8 @@ export default function AuthCallback() {
   }, [session, loading, passwordRecovery, getMfaAssurance, navigate])
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center bg-paper text-brand-700 font-display text-lg">
-      Completing sign in…
-    </div>
+    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, bgcolor: 'background.default', color: 'primary.main' }}>
+      <CircularProgress size={22} /><Typography variant="h6">Completing sign in…</Typography>
+    </Box>
   )
 }

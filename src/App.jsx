@@ -16,6 +16,7 @@ import Suppliers from './pages/Suppliers'
 import Transactions from './pages/Transactions'
 import Reports from './pages/Reports'
 import { useEffect, useState } from 'react'
+import { Box, CircularProgress, Typography } from '@mui/material'
 
 function PrivateRoute({ children }) {
   const { session, loading, profile, signOut, getMfaAssurance, passwordRecovery } = useAuth()
@@ -54,7 +55,7 @@ function PrivateRoute({ children }) {
     return () => { active = false }
   }, [session, getMfaAssurance])
 
-  if (loading || mfaLoading) return <div className="h-screen w-screen flex items-center justify-center bg-paper text-brand-700 font-display text-lg">Loading Stockroom…</div>
+  if (loading || mfaLoading) return <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, bgcolor: 'background.default', color: 'primary.main' }}><CircularProgress size={22} /><Typography variant="h6">Loading Stockroom…</Typography></Box>
   if (!session) return <Navigate to="/login" replace state={{ from: location.pathname }} />
   if (passwordRecovery && location.pathname !== '/update-password') {
     return <Navigate to="/update-password" replace />

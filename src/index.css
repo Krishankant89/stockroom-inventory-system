@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 * {
   -webkit-font-smoothing: antialiased;
 }
@@ -14,6 +10,7 @@ body {
   background-color: #f6f4ee;
   color: #12241f;
   font-family: 'Inter', system-ui, sans-serif;
+  margin: 0;
 }
 
 ::selection {
@@ -21,33 +18,14 @@ body {
   color: #123024;
 }
 
-@layer components {
-  .input {
-    @apply w-full rounded-lg border border-line px-3 py-2.5 text-sm bg-paper/40 focus:bg-white transition;
-  }
-}
-
-.scrollbar-thin::-webkit-scrollbar {
+*::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-.scrollbar-thin::-webkit-scrollbar-thumb {
+*::-webkit-scrollbar-thumb {
   background: #d7ecdd;
   border-radius: 8px;
 }
-.scrollbar-thin::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track {
   background: transparent;
-}
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-fadeUp {
-  animation: fadeUp 0.35s ease both;
-}
-
-input:focus-visible, button:focus-visible, select:focus-visible, textarea:focus-visible {
-  outline: 2px solid #2f7d58;
-  outline-offset: 1px;
 }
